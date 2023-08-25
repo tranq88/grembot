@@ -35,19 +35,19 @@ class TempChannel(commands.Cog):
             interaction.user.guild_permissions.administrator or
             interaction.user.id == 187679550841290752
         ):
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 'This command is admin-only.'
             )
             return
 
         if interaction.channel_id != GREMLIN_TEMP_CHANNEL:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f'This command can only be used in <#{GREMLIN_TEMP_CHANNEL}>'
             )
             return
 
         await interaction.channel.purge(limit=amount)
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f'Deleted the last {amount} messages.'
         )
 
