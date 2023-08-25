@@ -29,7 +29,10 @@ class TempChannel(commands.Cog):
     )
     @app_commands.guilds(BOT_TEST_SERVER, GREMLIN_ID)
     async def purge(self, interaction: discord.Interaction, amount: int):
-        if not interaction.user.guild_permissions.administrator:
+        if not (
+            interaction.user.guild_permissions.administrator or
+            interaction.user.id == 187679550841290752
+        ):
             await interaction.response.send_message(
                 'This command is admin-only.',
                 ephemeral=True
