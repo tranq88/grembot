@@ -47,6 +47,10 @@ class TempChannel(commands.Cog):
             return
 
         await interaction.channel.purge(limit=amount)
+        await interaction.response.send_message(
+            f'Deleted the last {amount} messages.',
+            ephemeral=True
+        )
 
 
 async def setup(bot: commands.Bot):
