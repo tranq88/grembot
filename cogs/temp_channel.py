@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import asyncio
 
 from env import (
@@ -21,6 +22,28 @@ class TempChannel(commands.Cog):
         if message.channel.id in [BTS_TEMP_CHANNEL, GREMLIN_TEMP_CHANNEL]:
             await asyncio.sleep(1800)
             await message.delete()
+
+    @app_commands.command(
+        name='purge',
+        description='Purge messages. Only usable in #temp-channel.'
+    )
+    @app_commands.guilds(BOT_TEST_SERVER, GREMLIN_ID)
+    async def purge(self, interaction: discord.Interaction, amount: int):
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message(
+                'This command is admin-only.',
+                ephemeral=True
+            )
+            return
+
+        if interaction.channel_id != GREMLIN_TEMP_CHANNEL:
+            await interaction.response.send_message(
+                f'This command can only be used in <#{GREMLIN_TEMP_CHANNEL}>',
+                ephemeral=True
+            )
+            return
+
+        await interaction.channel.purge(amount)
 
 
 async def setup(bot: commands.Bot):
