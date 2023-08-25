@@ -29,27 +29,26 @@ class TempChannel(commands.Cog):
     )
     @app_commands.guilds(BOT_TEST_SERVER, GREMLIN_ID)
     async def purge(self, interaction: discord.Interaction, amount: int):
+        await interaction.response.defer(ephemeral=True)
+
         if not (
             interaction.user.guild_permissions.administrator or
             interaction.user.id == 187679550841290752
         ):
             await interaction.response.send_message(
-                'This command is admin-only.',
-                ephemeral=True
+                'This command is admin-only.'
             )
             return
 
         if interaction.channel_id != GREMLIN_TEMP_CHANNEL:
             await interaction.response.send_message(
-                f'This command can only be used in <#{GREMLIN_TEMP_CHANNEL}>',
-                ephemeral=True
+                f'This command can only be used in <#{GREMLIN_TEMP_CHANNEL}>'
             )
             return
 
         await interaction.channel.purge(limit=amount)
         await interaction.response.send_message(
-            f'Deleted the last {amount} messages.',
-            ephemeral=True
+            f'Deleted the last {amount} messages.'
         )
 
 
