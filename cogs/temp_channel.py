@@ -46,7 +46,7 @@ class TempChannel(commands.Cog):
             )
             return
 
-        await interaction.channel.purge(amount)
+        await interaction.channel.purge(limit=amount)
 
 
 async def setup(bot: commands.Bot):
