@@ -1,7 +1,6 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
-import asyncio
 
 from env import (
     BOT_TEST_SERVER,
@@ -10,18 +9,47 @@ from env import (
     GREMLIN_TEMP_CHANNEL
 )
 
+from datetime import datetime, timedelta, timezone
+from collections import deque
+
 
 class TempChannel(commands.Cog):
     """Delete messages in #temp-channel after 30 minutes."""
+    message_queue: deque[discord.Message] = deque()
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.Cog.listener()
+    async def on_ready(self):
+        self.delete_messages.start()
+
+    @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.channel.id in [BTS_TEMP_CHANNEL, GREMLIN_TEMP_CHANNEL]:
-            await asyncio.sleep(1800)
-            await message.delete()
+            self.message_queue.append(message)
+
+    @tasks.loop(seconds=30)
+    async def delete_messages(self):
+        if not self.message_queue:
+            return
+
+        to_remove: list[discord.Message] = []
+        now = datetime.now(timezone.utc)
+
+        for m in self.message_queue:
+            if (now - m.created_at) > timedelta(minutes=30):
+                to_remove.append(m)
+
+        # this should be fine because the messages in to_remove
+        # should be at the front of the queue
+        for _ in range(len(to_remove)):
+            self.message_queue.popleft()
+
+        # note when in prod: this will probably bug out
+        # if both temp channels get messages
+        channel = self.bot.get_channel(GREMLIN_TEMP_CHANNEL)
+        await channel.delete_messages(to_remove)
 
     @app_commands.command(
         name='purge',
