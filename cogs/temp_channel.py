@@ -13,6 +13,8 @@ from datetime import datetime, timedelta, timezone
 from collections import deque
 
 
+ME = 187679550841290752
+
 class TempChannel(commands.Cog):
     """Delete messages in #temp-channel after 30 minutes."""
     message_queue: deque[discord.Message] = deque()
@@ -41,6 +43,9 @@ class TempChannel(commands.Cog):
             if (now - m.created_at) > timedelta(minutes=30):
                 to_remove.append(m)
 
+        if not to_remove:
+            return
+
         # this should be fine because the messages in to_remove
         # should be at the front of the queue
         for _ in range(len(to_remove)):
@@ -49,7 +54,13 @@ class TempChannel(commands.Cog):
         # note when in prod: this will probably bug out
         # if both temp channels get messages
         channel = self.bot.get_channel(GREMLIN_TEMP_CHANNEL)
-        await channel.delete_messages(to_remove)
+
+        try:
+            await channel.delete_messages(to_remove)
+        except discord.NotFound:  # the message was likely deleted already
+            # we need to catch this error because for some reason
+            # it stops the task loop
+            pass
 
     @app_commands.command(
         name='purge',
@@ -61,7 +72,7 @@ class TempChannel(commands.Cog):
 
         if not (
             interaction.user.guild_permissions.administrator or
-            interaction.user.id == 187679550841290752
+            interaction.user.id == ME
         ):
             await interaction.followup.send(
                 'This command is admin-only.'
@@ -78,6 +89,26 @@ class TempChannel(commands.Cog):
         await interaction.followup.send(
             f'Deleted the last {amount} messages.'
         )
+
+    @app_commands.command(
+        name='queuesize',
+        description=('View the number of messages in #temp-channel '
+                     'awaiting deletion.')
+    )
+    @app_commands.guilds(BOT_TEST_SERVER, GREMLIN_ID)
+    async def queuesize(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
+        if not (
+            interaction.user.guild_permissions.administrator or
+            interaction.user.id == ME
+        ):
+            await interaction.followup.send(
+                'This command is admin-only.'
+            )
+            return
+
+        await interaction.followup.send(len(self.message_queue))
 
 
 async def setup(bot: commands.Bot):
