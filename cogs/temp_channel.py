@@ -57,7 +57,7 @@ class TempChannel(commands.Cog):
 
         try:
             await channel.delete_messages(to_remove)
-        except discord.NotFound:  # the message was likely deleted already
+        except discord.NotFound:  # a message was likely deleted already
             # we need to catch this error because for some reason
             # it stops the task loop
             pass
